@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Node (Frontend)
+whisperline-frontend/node_modules/
+whisperline-frontend/build/
+whisperline-frontend/.env.local
+whisperline-frontend/.env.development.local
+whisperline-frontend/.env.test.local
+whisperline-frontend/.env.production.local
+whisperline-frontend/npm-debug.log*
+whisperline-frontend/yarn-debug.log*
+whisperline-frontend/yarn-error.log*
+
+# Gradle (Backend)
+whisperline-backend/.gradle/
+whisperline-backend/build/
+whisperline-backend/out/
+whisperline-backend/bin/
+
+# Spring Boot
+whisperline-backend/*.log
+whisperline-backend/application-*.properties
+whisperline-backend/application-*.yml
+
