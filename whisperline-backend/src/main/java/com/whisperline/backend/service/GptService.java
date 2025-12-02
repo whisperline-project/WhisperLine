@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class GptService {
 
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String MODEL = "gpt-4";
+    private static final String MODEL = "gpt-5-nano";
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
