@@ -2,21 +2,46 @@ import React, { useState } from 'react';
 import './App.css';
 import MessageBox from './components/MessageBox';
 import InputBox from './components/InputBox';
+import { sendMessage } from './services/api';
 
 function App() {
   const [messages, setMessages] = useState([
-    { id: 1, message: 'Hello! How can I help you?', sender: 'assistant', timestamp: '10:30' },
-    { id: 2, message: 'Hello', sender: 'user', timestamp: '10:31' }
+    { id: 1, message: 'Hello! How can I help you?', sender: 'assistant', timestamp: '10:30' }
   ]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = (message) => {
-    const newMessage = {
+  const handleSend = async (message) => {
+    const userMessage = {
       id: messages.length + 1,
       message,
       sender: 'user',
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     };
-    setMessages([...messages, newMessage]);
+    
+    setMessages([...messages, userMessage]);
+    setIsLoading(true);
+
+    try {
+      const response = await sendMessage(message);
+      const assistantMessage = {
+        id: messages.length + 2,
+        message: response.response,
+        sender: 'assistant',
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorMessage = {
+        id: messages.length + 2,
+        message: 'Failed to send message. Please try again.',
+        sender: 'assistant',
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -34,7 +59,7 @@ function App() {
           />
         ))}
       </div>
-      <InputBox onSend={handleSend} />
+      <InputBox onSend={handleSend} isLoading={isLoading} />
     </div>
   );
 }
