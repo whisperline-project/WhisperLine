@@ -23,18 +23,29 @@ function App() {
 
     try {
       const response = await sendMessage(message);
-      const assistantMessage = {
-        id: messages.length + 2,
-        message: response.response,
-        sender: 'assistant',
-        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+      
+      if (response.error) {
+        const errorMessage = {
+          id: messages.length + 2,
+          message: response.error,
+          sender: 'assistant',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } else {
+        const assistantMessage = {
+          id: messages.length + 2,
+          message: response.response,
+          sender: 'assistant',
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
       const errorMessage = {
         id: messages.length + 2,
-        message: 'Failed to send message. Please try again.',
+        message: error.message || 'Failed to send message. Please try again.',
         sender: 'assistant',
         timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       };

@@ -13,11 +13,15 @@ export const sendMessage = async (message, userId = 'user1') => {
       })
     });
 
+    const data = await response.json();
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        error: data.error || `HTTP error! status: ${response.status}`,
+        response: null
+      };
     }
 
-    const data = await response.json();
     return data;
   } catch (error) {
     console.error('Error sending message:', error);
