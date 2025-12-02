@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Signup.css';
+import { signup } from '../services/api';
 
 function Signup({ onSignup, onNavigateToLogin }) {
   const [formData, setFormData] = useState({
@@ -8,19 +9,35 @@ function Signup({ onSignup, onNavigateToLogin }) {
     password: '',
     email: ''
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.name.trim() && formData.username.trim() && 
-        formData.password.trim() && formData.email.trim()) {
+    setError('');
+    
+    if (!formData.name.trim() || !formData.username.trim() || 
+        !formData.password.trim() || !formData.email.trim()) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    const response = await signup(formData);
+    setIsLoading(false);
+
+    if (response.success) {
       onSignup(formData);
+    } else {
+      setError(response.message || 'Signup failed');
     }
   };
 
@@ -73,8 +90,9 @@ function Signup({ onSignup, onNavigateToLogin }) {
               required
             />
           </div>
-          <button type="submit" className="signup-button">
-            Sign Up
+          {error && <div className="error-message">{error}</div>}
+          <button type="submit" className="signup-button" disabled={isLoading}>
+            {isLoading ? 'Signing up...' : 'Sign Up'}
           </button>
         </form>
         <div className="login-link-container">

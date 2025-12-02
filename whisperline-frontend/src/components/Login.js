@@ -1,14 +1,30 @@
 import React, { useState } from 'react';
 import './Login.css';
+import { login } from '../services/api';
 
 function Login({ onLogin, onNavigateToSignup }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username.trim() && password.trim()) {
+    setError('');
+    
+    if (!username.trim() || !password.trim()) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    const response = await login({ username, password });
+    setIsLoading(false);
+
+    if (response.success) {
       onLogin({ username, password });
+    } else {
+      setError(response.message || 'Login failed');
     }
   };
 
@@ -37,8 +53,9 @@ function Login({ onLogin, onNavigateToSignup }) {
               required
             />
           </div>
-          <button type="submit" className="login-button">
-            Login
+          {error && <div className="error-message">{error}</div>}
+          <button type="submit" className="login-button" disabled={isLoading}>
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
         <div className="signup-link-container">
