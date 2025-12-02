@@ -2,13 +2,35 @@ import React, { useState } from 'react';
 import './App.css';
 import MessageBox from './components/MessageBox';
 import InputBox from './components/InputBox';
+import Login from './components/Login';
+import Signup from './components/Signup';
 import { sendMessage } from './services/api';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentView, setCurrentView] = useState('login');
   const [messages, setMessages] = useState([
     { id: 1, message: 'Hello! How can I help you?', sender: 'assistant', timestamp: '10:30' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = (credentials) => {
+    console.log('Login attempt:', credentials);
+    setIsAuthenticated(true);
+  };
+
+  const handleSignup = (userData) => {
+    console.log('Signup attempt:', userData);
+    setIsAuthenticated(true);
+  };
+
+  const handleNavigateToSignup = () => {
+    setCurrentView('signup');
+  };
+
+  const handleNavigateToLogin = () => {
+    setCurrentView('login');
+  };
 
   const handleSend = async (message) => {
     const userMessage = {
@@ -58,6 +80,13 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  if (!isAuthenticated) {
+    if (currentView === 'signup') {
+      return <Signup onSignup={handleSignup} onNavigateToLogin={handleNavigateToLogin} />;
+    }
+    return <Login onLogin={handleLogin} onNavigateToSignup={handleNavigateToSignup} />;
+  }
 
   return (
     <div className="App">
