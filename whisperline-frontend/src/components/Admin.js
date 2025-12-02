@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import './Login.css';
-import { login } from '../services/api';
+import './Admin.css';
 
-function Login({ onLogin, onNavigateToSignup, title = 'WhisperLine' }) {
+function Admin({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,27 +16,29 @@ function Login({ onLogin, onNavigateToSignup, title = 'WhisperLine' }) {
       return;
     }
 
-    setIsLoading(true);
-    const response = await login({ username, password });
-    setIsLoading(false);
-
-    if (response.success) {
-      onLogin({ username, password });
+    // Fixed admin credentials: admin / admin123!
+    if (username === 'admin' && password === 'admin123!') {
+      setIsLoading(true);
+      // Simulate API call delay
+      setTimeout(() => {
+        setIsLoading(false);
+        onLogin({ username, password, isAdmin: true });
+      }, 500);
     } else {
-      setError(response.message || 'Login failed');
+      setError('Invalid admin credentials');
     }
   };
 
   return (
-    <div className="login-container">
+    <div className="admin-container">
       <div className="login-box">
-        <h2 className="login-title">{title}</h2>
+        <h2 className="login-title">WhisperLine for Admin</h2>
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <input
               type="text"
               className="form-input"
-              placeholder="Username"
+              placeholder="Admin Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -58,16 +59,10 @@ function Login({ onLogin, onNavigateToSignup, title = 'WhisperLine' }) {
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <div className="signup-link-container">
-          <span className="signup-text">Don't have an account? </span>
-          <button className="signup-link" onClick={onNavigateToSignup}>
-            Sign up
-          </button>
-        </div>
       </div>
     </div>
   );
 }
 
-export default Login;
+export default Admin;
 

@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import MessageBox from './components/MessageBox';
 import InputBox from './components/InputBox';
 import Login from './components/Login';
 import Signup from './components/Signup';
+import Admin from './components/Admin';
 import { sendMessage } from './services/api';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState('login');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/admin') {
+      setCurrentView('admin');
+    }
+  }, []);
   const [messages, setMessages] = useState([
     { id: 1, message: 'Hello! How can I help you?', sender: 'assistant', timestamp: '10:30' }
   ]);
@@ -17,6 +26,15 @@ function App() {
   const handleLogin = (credentials) => {
     console.log('Login attempt:', credentials);
     setIsAuthenticated(true);
+    if (credentials.isAdmin) {
+      setIsAdmin(true);
+    }
+  };
+
+  const handleAdminLogin = (credentials) => {
+    console.log('Admin login attempt:', credentials);
+    setIsAuthenticated(true);
+    setIsAdmin(true);
   };
 
   const handleSignup = (userData) => {
@@ -82,6 +100,9 @@ function App() {
   };
 
   if (!isAuthenticated) {
+    if (currentView === 'admin') {
+      return <Admin onLogin={handleAdminLogin} />;
+    }
     if (currentView === 'signup') {
       return <Signup onSignup={handleSignup} onNavigateToLogin={handleNavigateToLogin} />;
     }
