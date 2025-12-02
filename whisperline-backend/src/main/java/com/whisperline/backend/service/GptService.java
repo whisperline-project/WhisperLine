@@ -47,7 +47,11 @@ public class GptService {
         this.objectMapper = new ObjectMapper();
     }
 
-    public GptResponse callGpt(String userMessage) {
+    public GptResponse callGpt(String userMessage, boolean echo) {
+        if (echo) {
+            return new GptResponse("Echo: " + userMessage, 0);
+        }
+
         if (apiKey == null || apiKey.isEmpty()) {
             throw new RuntimeException("OpenAI API key is not configured");
         }

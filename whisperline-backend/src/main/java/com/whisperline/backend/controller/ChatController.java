@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,6 +30,9 @@ public class ChatController {
     @Autowired
     private ResponseValidator responseValidator;
 
+    @Value("${chat.echo.mode:false}")
+    private boolean echoMode;
+
     @GetMapping("/health")
     public String healthCheck() {
         return "Chat API is running";
@@ -39,18 +43,20 @@ public class ChatController {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         
         try {
-            GptService.GptResponse gptResponse = gptService.callGpt(request.getMessage());
+            GptService.GptResponse gptResponse = gptService.callGpt(request.getMessage(), echoMode);
             
-            String fullResponse = "Counseling Response: " + gptResponse.getCounselingResponse() + 
-                                 "\nRisk Level: " + gptResponse.getRiskLevel();
-            
-            ResponseValidator.ValidationResult validation = responseValidator.validate(fullResponse);
-            
-            if (!validation.isValid()) {
-                MessageResponse errorResponse = new MessageResponse();
-                errorResponse.setError("Response validation failed: " + validation.getMessage());
-                errorResponse.setTimestamp(timestamp);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            if (!echoMode) {
+                String fullResponse = "Counseling Response: " + gptResponse.getCounselingResponse() + 
+                                     "\nRisk Level: " + gptResponse.getRiskLevel();
+                
+                ResponseValidator.ValidationResult validation = responseValidator.validate(fullResponse);
+                
+                if (!validation.isValid()) {
+                    MessageResponse errorResponse = new MessageResponse();
+                    errorResponse.setError("Response validation failed: " + validation.getMessage());
+                    errorResponse.setTimestamp(timestamp);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                }
             }
             
             MessageResponse response = new MessageResponse(
