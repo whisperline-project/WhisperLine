@@ -23,6 +23,7 @@ function App() {
 
     try {
       const response = await sendMessage(message);
+      console.log('API Response:', response);
       
       if (response.error) {
         const errorMessage = {
@@ -33,12 +34,15 @@ function App() {
         };
         setMessages(prev => [...prev, errorMessage]);
       } else {
+        console.log('Response data:', response);
+        console.log('Response.response:', response.response);
         const assistantMessage = {
           id: messages.length + 2,
-          message: response.response,
+          message: response.response || 'No response received',
           sender: 'assistant',
           timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         };
+        console.log('Assistant message to add:', assistantMessage);
         setMessages(prev => [...prev, assistantMessage]);
       }
     } catch (error) {
