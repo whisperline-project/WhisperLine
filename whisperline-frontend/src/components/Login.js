@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Login.css';
 import { login } from '../services/api';
 
-function Login({ onLogin, onNavigateToSignup, title = 'WhisperLine' }) {
+function Login({ onLogin, onNavigateToSignup, onNavigateToAdmin, title = 'WhisperLine' }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -62,6 +62,11 @@ function Login({ onLogin, onNavigateToSignup, title = 'WhisperLine' }) {
           <span className="signup-text">Don't have an account? </span>
           <button className="signup-link" onClick={onNavigateToSignup}>
             Sign up
+          </button>
+        </div>
+        <div className="admin-link-container">
+          <button className="admin-link" onClick={onNavigateToAdmin}>
+            WhisperLine for Admin
           </button>
         </div>
       </div>

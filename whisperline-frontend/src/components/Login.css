@@ -104,3 +104,24 @@
   color: #0056b3;
 }
 
+.admin-link-container {
+  text-align: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.admin-link {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.admin-link:hover {
+  color: #495057;
+}
+

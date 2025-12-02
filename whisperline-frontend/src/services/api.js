@@ -97,3 +97,24 @@ export const login = async (credentials) => {
   }
 };
 
+export const getTopRiskUsers = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/dashboard/top-risk-users`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching top risk users:', error);
+    throw error;
+  }
+};
+

@@ -5,6 +5,7 @@ import InputBox from './components/InputBox';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Admin from './components/Admin';
+import Dashboard from './components/Dashboard';
 import { sendMessage } from './services/api';
 
 function App() {
@@ -48,6 +49,10 @@ function App() {
 
   const handleNavigateToLogin = () => {
     setCurrentView('login');
+  };
+
+  const handleNavigateToAdmin = () => {
+    setCurrentView('admin');
   };
 
   const handleSend = async (message) => {
@@ -106,7 +111,11 @@ function App() {
     if (currentView === 'signup') {
       return <Signup onSignup={handleSignup} onNavigateToLogin={handleNavigateToLogin} />;
     }
-    return <Login onLogin={handleLogin} onNavigateToSignup={handleNavigateToSignup} />;
+    return <Login onLogin={handleLogin} onNavigateToSignup={handleNavigateToSignup} onNavigateToAdmin={handleNavigateToAdmin} />;
+  }
+
+  if (isAdmin) {
+    return <Dashboard />;
   }
 
   return (
