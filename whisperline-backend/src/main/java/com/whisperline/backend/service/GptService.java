@@ -40,6 +40,9 @@ public class GptService {
 
             Do not deviate from this format. Do not add any additional text before or after these two lines.
             If you detect any potential danger, assess the risk level accordingly and provide appropriate guidance.
+            
+            Keep your reasoning efficient - assess the situation quickly and generate your response. 
+            Focus on producing the actual counseling response rather than extensive internal reasoning.
             """;
 
     public GptService() {
@@ -72,7 +75,8 @@ public class GptService {
         userMessageMap.put("content", userMessage);
 
         requestBody.put("messages", new Object[]{systemMessage, userMessageMap});
-        requestBody.put("max_completion_tokens", 1200);
+        // max_completion_tokens includes both reasoning tokens and actual response tokens
+        requestBody.put("max_completion_tokens", 4000);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
