@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.whisperline.backend.dto.MessageRequest;
 import com.whisperline.backend.dto.MessageResponse;
+import com.whisperline.backend.entity.ChatMessage;
+import com.whisperline.backend.repository.ChatMessageRepository;
 import com.whisperline.backend.service.GptService;
 import com.whisperline.backend.service.ResponseValidator;
 
@@ -29,6 +31,9 @@ public class ChatController {
 
     @Autowired
     private ResponseValidator responseValidator;
+
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
     @Value("${chat.echo.mode:false}")
     private boolean echoMode;
@@ -64,6 +69,14 @@ public class ChatController {
                 timestamp,
                 gptResponse.getRiskLevel()
             );
+            
+            // Save chat message to database
+            ChatMessage chatMessage = new ChatMessage(
+                request.getUserId(),
+                request.getMessage(),
+                gptResponse.getRiskLevel()
+            );
+            chatMessageRepository.save(chatMessage);
             
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
