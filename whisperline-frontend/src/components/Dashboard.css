@@ -41,6 +41,7 @@
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 .dashboard-content h2 {
@@ -108,5 +109,11 @@
   padding: 40px;
   color: #666;
   font-style: italic;
+}
+
+.message-cell {
+  max-width: 300px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 

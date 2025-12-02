@@ -1,6 +1,8 @@
 package com.whisperline.backend.controller;
 
+import com.whisperline.backend.dto.RiskAlert;
 import com.whisperline.backend.dto.UserRiskStats;
+import com.whisperline.backend.entity.ChatMessage;
 import com.whisperline.backend.entity.User;
 import com.whisperline.backend.repository.ChatMessageRepository;
 import com.whisperline.backend.repository.UserRepository;
@@ -51,6 +53,33 @@ public class AdminController {
         // Sort by average risk level descending and take top 10
         List<UserRiskStats> top10 = userRiskStats.stream()
             .sorted((a, b) -> Double.compare(b.getAverageRiskLevel(), a.getAverageRiskLevel()))
+            .limit(10)
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(top10);
+    }
+
+    @GetMapping("/dashboard/risk-alerts")
+    public ResponseEntity<List<RiskAlert>> getRiskAlerts() {
+        List<ChatMessage> recentMessages = chatMessageRepository.findRecentHighRiskMessages();
+        
+        List<RiskAlert> riskAlerts = new ArrayList<>();
+        
+        for (ChatMessage message : recentMessages) {
+            User user = userRepository.findByUsername(message.getUserId()).orElse(null);
+            if (user != null) {
+                riskAlerts.add(new RiskAlert(
+                    message.getUserId(),
+                    user.getName(),
+                    message.getMessage(),
+                    message.getRiskLevel(),
+                    message.getTimestamp()
+                ));
+            }
+        }
+        
+        // Limit to top 10 most recent high-risk messages
+        List<RiskAlert> top10 = riskAlerts.stream()
             .limit(10)
             .collect(Collectors.toList());
         

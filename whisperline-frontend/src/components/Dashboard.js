@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
-import { getTopRiskUsers } from '../services/api';
+import { getTopRiskUsers, getRiskAlerts } from '../services/api';
 
 function Dashboard() {
   const [topUsers, setTopUsers] = useState([]);
+  const [riskAlerts, setRiskAlerts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingAlerts, setIsLoadingAlerts] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchTopRiskUsers();
+    fetchRiskAlerts();
   }, []);
 
   const fetchTopRiskUsers = async () => {
@@ -23,6 +26,48 @@ function Dashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchRiskAlerts = async () => {
+    try {
+      setIsLoadingAlerts(true);
+      const data = await getRiskAlerts();
+      setRiskAlerts(data);
+    } catch (err) {
+      console.error('Error fetching risk alerts:', err);
+    } finally {
+      setIsLoadingAlerts(false);
+    }
+  };
+
+  const refreshAll = () => {
+    fetchTopRiskUsers();
+    fetchRiskAlerts();
+  };
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.error('Invalid timestamp:', timestamp);
+      return 'Invalid date';
+    }
+    
+    const now = new Date();
+    const diffMs = Math.abs(now - date);
+    
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
   };
 
   const getRiskLevelColor = (riskLevel) => {
@@ -43,18 +88,68 @@ function Dashboard() {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Admin Dashboard</h1>
-        <button onClick={fetchTopRiskUsers} className="refresh-button">
+        <button onClick={refreshAll} className="refresh-button">
           Refresh
         </button>
       </div>
 
-      {isLoading ? (
+      {isLoading && isLoadingAlerts ? (
         <div className="loading">Loading dashboard data...</div>
       ) : error ? (
         <div className="error">{error}</div>
       ) : (
-        <div className="dashboard-content">
-          <h2>Top 10 Users by Average Risk Level</h2>
+        <>
+          {/* Risk Alerts Section */}
+          <div className="dashboard-content">
+            <h2>Real-time Risk Alerts</h2>
+            {isLoadingAlerts ? (
+              <div className="loading">Loading risk alerts...</div>
+            ) : (
+              <div className="table-container">
+                <table className="risk-table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Username</th>
+                      <th>Name</th>
+                      <th>Message</th>
+                      <th>Risk Level</th>
+                      <th>Risk Category</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {riskAlerts.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="no-data">No risk alerts available</td>
+                      </tr>
+                    ) : (
+                      riskAlerts.map((alert, index) => (
+                        <tr key={`${alert.username}-${alert.timestamp}-${index}`}>
+                          <td>{formatTimestamp(alert.timestamp)}</td>
+                          <td>{alert.username}</td>
+                          <td>{alert.name}</td>
+                          <td className="message-cell">{alert.message.length > 100 ? alert.message.substring(0, 100) + '...' : alert.message}</td>
+                          <td>
+                            <span 
+                              className="risk-level-badge"
+                              style={{ backgroundColor: getRiskLevelColor(alert.riskLevel) }}
+                            >
+                              {alert.riskLevel}
+                            </span>
+                          </td>
+                          <td>{getRiskLevelLabel(alert.riskLevel)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Top 10 Users Section */}
+          <div className="dashboard-content">
+            <h2>Top 10 Users by Average Risk Level</h2>
           <div className="table-container">
             <table className="risk-table">
               <thead>
@@ -94,7 +189,8 @@ function Dashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

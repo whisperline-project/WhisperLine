@@ -18,5 +18,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
            "GROUP BY cm.userId " +
            "ORDER BY avgRisk DESC")
     List<Object[]> findAverageRiskLevelByUser();
+    
+    @Query("SELECT cm FROM ChatMessage cm WHERE cm.riskLevel IS NOT NULL " +
+           "ORDER BY cm.timestamp DESC, cm.riskLevel DESC")
+    List<ChatMessage> findRecentHighRiskMessages();
 }
 
