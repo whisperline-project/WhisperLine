@@ -1,8 +1,12 @@
 package com.whisperline.backend.service;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -10,13 +14,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class GptService {
+
+    private static final Logger logger = LoggerFactory.getLogger(GptService.class);
 
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
     private static final String MODEL = "gpt-5-nano";
@@ -50,13 +58,13 @@ public class GptService {
         this.objectMapper = new ObjectMapper();
     }
 
-    public GptResponse callGpt(String userMessage, boolean echo) {
+    public GptResponse callGpt(String userMessage, boolean echo) throws GptServiceException {
         if (echo) {
             return new GptResponse("Echo: " + userMessage, 0);
         }
 
         if (apiKey == null || apiKey.isEmpty()) {
-            throw new RuntimeException("OpenAI API key is not configured");
+            throw new GptServiceException("OpenAI API key is not configured");
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -75,14 +83,13 @@ public class GptService {
         userMessageMap.put("content", userMessage);
 
         requestBody.put("messages", new Object[]{systemMessage, userMessageMap});
-        // max_completion_tokens includes both reasoning tokens and actual response tokens
         requestBody.put("max_completion_tokens", 4000);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
         try {
-            System.out.println("Sending request to GPT API - Model: " + MODEL);
-            System.out.println("Request body: " + objectMapper.writeValueAsString(requestBody));
+            logger.debug("Sending request to GPT API - Model: {}", MODEL);
+            logger.debug("Request body: {}", objectMapper.writeValueAsString(requestBody));
             
             ResponseEntity<String> response = restTemplate.postForEntity(
                     OPENAI_API_URL,
@@ -90,78 +97,88 @@ public class GptService {
                     String.class
             );
 
-            System.out.println("GPT API Response Status: " + response.getStatusCode());
-            System.out.println("GPT API Full Response Body: " + response.getBody());
+            logger.debug("GPT API Response Status: {}", response.getStatusCode());
+            logger.debug("GPT API Full Response Body: {}", response.getBody());
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                System.out.println("Parsed JSON Node: " + jsonNode.toString());
+                String content = extractContentFromResponse(response.getBody());
                 
-                JsonNode choicesNode = jsonNode.path("choices");
-                System.out.println("Choices node: " + choicesNode.toString());
-                
-                if (choicesNode.isArray() && choicesNode.size() > 0) {
-                    JsonNode firstChoice = choicesNode.get(0);
-                    System.out.println("First choice: " + firstChoice.toString());
-                    
-                    JsonNode messageNode = firstChoice.path("message");
-                    System.out.println("Message node: " + messageNode.toString());
-                    
-                    JsonNode contentNode = messageNode.path("content");
-                    System.out.println("Content node: " + contentNode.toString());
-                    System.out.println("Content node is null: " + contentNode.isNull());
-                    System.out.println("Content node is missing: " + contentNode.isMissingNode());
-                    
-                    String content = contentNode.asText();
-                    System.out.println("Extracted content: [" + content + "]");
-                    System.out.println("Content length: " + (content != null ? content.length() : 0));
-                    
-                    return parseResponse(content);
-                } else {
-                    throw new RuntimeException("No choices in GPT response");
+                if (content == null || content.isEmpty()) {
+                    throw new GptServiceException("Empty content received from GPT API");
                 }
+                
+                return parseResponse(content);
             } else {
-                System.out.println("GPT API Error Response: " + response.getBody());
-                throw new RuntimeException("OpenAI API error: " + response.getStatusCode());
+                logger.error("GPT API Error Response: {}", response.getBody());
+                throw new GptServiceException("OpenAI API error: " + response.getStatusCode());
             }
-        } catch (RuntimeException e) {
-            System.out.println("RuntimeException: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        } catch (Exception e) {
-            System.out.println("Exception: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to call GPT API: " + e.getMessage(), e);
+        } catch (RestClientException e) {
+            logger.error("RestClient error calling GPT API: {}", e.getMessage(), e);
+            throw new GptServiceException("Failed to call GPT API: " + e.getMessage(), e);
+        } catch (JsonProcessingException e) {
+            logger.error("JSON processing error: {}", e.getMessage(), e);
+            throw new GptServiceException("Failed to process JSON: " + e.getMessage(), e);
+        } catch (IOException e) {
+            logger.error("IO error: {}", e.getMessage(), e);
+            throw new GptServiceException("IO error occurred: " + e.getMessage(), e);
         }
     }
 
-    private GptResponse parseResponse(String rawResponse) {
-        System.out.println("Parsing GPT Response - Raw: " + rawResponse);
+    private String extractContentFromResponse(String responseBody) throws IOException {
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        logger.debug("Parsed JSON Node: {}", jsonNode);
+        
+        JsonNode choicesNode = jsonNode.path("choices");
+        logger.debug("Choices node: {}", choicesNode);
+        
+        if (choicesNode.isArray() && !choicesNode.isEmpty()) {
+            JsonNode firstChoice = choicesNode.get(0);
+            logger.debug("First choice: {}", firstChoice);
+            
+            JsonNode messageNode = firstChoice.path("message");
+            logger.debug("Message node: {}", messageNode);
+            
+            JsonNode contentNode = messageNode.path("content");
+            logger.debug("Content node: {}, isNull: {}, isMissing: {}", 
+                    contentNode, contentNode.isNull(), contentNode.isMissingNode());
+            
+            String content = contentNode.asText();
+            logger.debug("Extracted content: [{}], length: {}", content, content.length());
+            
+            return content;
+        }
+        
+        throw new GptServiceException("No choices in GPT response");
+    }
+
+    private GptResponse parseResponse(String rawResponse) throws GptServiceException {
+        logger.debug("Parsing GPT Response - Raw: {}", rawResponse);
         String[] lines = rawResponse.split("\n");
         String counselingResponse = null;
         Integer riskLevel = null;
 
-        for (String line : lines) {
-            line = line.trim();
-            System.out.println("Processing line: " + line);
-            if (line.startsWith("Counseling Response:")) {
-                counselingResponse = line.substring("Counseling Response:".length()).trim();
-                System.out.println("Found Counseling Response: " + counselingResponse);
-            } else if (line.startsWith("Risk Level:")) {
+        for (String rawLine : lines) {
+            String trimmedLine = rawLine.trim();
+            logger.debug("Processing line: {}", trimmedLine);
+            
+            if (trimmedLine.toLowerCase(Locale.ROOT).startsWith("counseling response:")) {
+                counselingResponse = trimmedLine.substring("Counseling Response:".length()).trim();
+                logger.debug("Found Counseling Response: {}", counselingResponse);
+            } else if (trimmedLine.toLowerCase(Locale.ROOT).startsWith("risk level:")) {
                 try {
-                    String riskStr = line.substring("Risk Level:".length()).trim();
+                    String riskStr = trimmedLine.substring("Risk Level:".length()).trim();
                     riskLevel = Integer.valueOf(riskStr);
-                    System.out.println("Found Risk Level: " + riskLevel);
+                    logger.debug("Found Risk Level: {}", riskLevel);
                 } catch (NumberFormatException e) {
-                    System.out.println("Error parsing risk level: " + e.getMessage());
-                    throw new RuntimeException("Invalid risk level format");
+                    logger.error("Error parsing risk level: {}", e.getMessage());
+                    throw new GptServiceException("Invalid risk level format", e);
                 }
             }
         }
 
         if (counselingResponse == null || riskLevel == null) {
-            System.out.println("Validation failed - Counseling Response: " + counselingResponse + ", Risk Level: " + riskLevel);
-            throw new RuntimeException("Invalid response format detected - possible jailbreak attempt");
+            logger.warn("Validation failed - Counseling Response: {}, Risk Level: {}", counselingResponse, riskLevel);
+            throw new GptServiceException("Invalid response format detected - possible jailbreak attempt");
         }
 
         return new GptResponse(counselingResponse, riskLevel);
@@ -192,5 +209,14 @@ public class GptService {
             this.riskLevel = riskLevel;
         }
     }
-}
 
+    public static class GptServiceException extends RuntimeException {
+        public GptServiceException(String message) {
+            super(message);
+        }
+
+        public GptServiceException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+}

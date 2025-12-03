@@ -2,6 +2,8 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.2.0'
 	id 'io.spring.dependency-management' version '1.1.4'
+	id 'com.github.spotbugs' version '6.0.7'
+	id 'pmd'
 }
 
 group = 'com.whisperline'
@@ -20,9 +22,48 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'com.mysql:mysql-connector-j:8.2.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	
+	// SpotBugs 보안 플러그인
+	spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
 
+// SpotBugs 설정
+spotbugs {
+	ignoreFailures = true
+	showStackTraces = true
+	showProgress = true
+}
+
+spotbugsMain {
+	reports {
+		html {
+			required = true
+			outputLocation = file("${buildDir}/reports/spotbugs/main.html")
+			stylesheet = 'fancy-hist.xsl'
+		}
+		xml {
+			required = true
+			outputLocation = file("${buildDir}/reports/spotbugs/main.xml")
+		}
+	}
+}
+
+// PMD 설정
+pmd {
+	ignoreFailures = true
+	consoleOutput = true
+	toolVersion = '6.55.0'
+	rulesMinimumPriority = 5
+	ruleSetFiles = files("config/pmd/ruleset.xml")
+}
+
+pmdMain {
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}

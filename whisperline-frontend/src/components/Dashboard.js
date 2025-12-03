@@ -22,7 +22,6 @@ function Dashboard() {
       setError('');
     } catch (err) {
       setError('Failed to load dashboard data');
-      console.error('Error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -34,7 +33,7 @@ function Dashboard() {
       const data = await getRiskAlerts();
       setRiskAlerts(data);
     } catch (err) {
-      console.error('Error fetching risk alerts:', err);
+      // Error handled silently - alerts section will show empty state
     } finally {
       setIsLoadingAlerts(false);
     }
@@ -52,7 +51,6 @@ function Dashboard() {
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      console.error('Invalid timestamp:', timestamp);
       return 'Invalid date';
     }
     
@@ -197,4 +195,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-

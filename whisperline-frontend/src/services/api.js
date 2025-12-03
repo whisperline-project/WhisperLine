@@ -3,32 +3,27 @@ const CHAT_API_URL = `${API_BASE_URL}/chat`;
 const AUTH_API_URL = `${API_BASE_URL}/auth`;
 
 export const sendMessage = async (message, userId = 'user1') => {
-  try {
-    const response = await fetch(`${CHAT_API_URL}/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: message,
-        userId: userId
-      })
-    });
+  const response = await fetch(`${CHAT_API_URL}/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: message,
+      userId: userId
+    })
+  });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
-      return {
-        error: data.error || `HTTP error! status: ${response.status}`,
-        response: null
-      };
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error sending message:', error);
-    throw error;
+  const data = await response.json();
+  
+  if (!response.ok) {
+    return {
+      error: data.error || `HTTP error! status: ${response.status}`,
+      response: null
+    };
   }
+
+  return data;
 };
 
 export const signup = async (userData) => {
@@ -57,7 +52,6 @@ export const signup = async (userData) => {
 
     return data;
   } catch (error) {
-    console.error('Error signing up:', error);
     return {
       success: false,
       message: 'Failed to connect to server'
@@ -89,7 +83,6 @@ export const login = async (credentials) => {
 
     return data;
   } catch (error) {
-    console.error('Error logging in:', error);
     return {
       success: false,
       message: 'Failed to connect to server'
@@ -98,44 +91,33 @@ export const login = async (credentials) => {
 };
 
 export const getTopRiskUsers = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/admin/dashboard/top-risk-users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard/top-risk-users`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
     }
+  });
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching top risk users:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
+
+  const data = await response.json();
+  return data;
 };
 
 export const getRiskAlerts = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/admin/dashboard/risk-alerts`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard/risk-alerts`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
     }
+  });
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching risk alerts:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
-};
 
+  const data = await response.json();
+  return data;
+};

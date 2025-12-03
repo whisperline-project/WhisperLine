@@ -3,6 +3,8 @@ package com.whisperline.backend.controller;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -19,12 +21,15 @@ import com.whisperline.backend.dto.MessageResponse;
 import com.whisperline.backend.entity.ChatMessage;
 import com.whisperline.backend.repository.ChatMessageRepository;
 import com.whisperline.backend.service.GptService;
+import com.whisperline.backend.service.GptService.GptServiceException;
 import com.whisperline.backend.service.ResponseValidator;
 
 @RestController
 @RequestMapping("/api/chat")
 @CrossOrigin(origins = "http://localhost:3000")
 public class ChatController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
 
     @Autowired
     private GptService gptService;
@@ -79,7 +84,8 @@ public class ChatController {
             chatMessageRepository.save(chatMessage);
             
             return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
+        } catch (GptServiceException e) {
+            logger.error("GPT Service error: {}", e.getMessage(), e);
             MessageResponse errorResponse = new MessageResponse();
             errorResponse.setError("Failed to process message: " + e.getMessage());
             errorResponse.setTimestamp(timestamp);
@@ -118,4 +124,3 @@ public class ChatController {
         }
     }
 }
-
